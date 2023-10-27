@@ -402,7 +402,8 @@ class SwapFileModule():
                 'mode': '0600',
                 'attributes': None
         }
-        self.changed = self.module.set_fs_attributes_if_different(file_args, changed)
+        if self.module.set_fs_attributes_if_different(file_args, changed):
+            self.changed = True
 
     def swap_on(self):
         """Enables swapping on swap file and ensures priority is set correctly"""
