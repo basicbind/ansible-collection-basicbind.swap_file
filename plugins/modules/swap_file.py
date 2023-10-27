@@ -12,7 +12,7 @@ module: swap_file
 short_description: Creates a swap file
 version_added: "1.0.0"
 description:
-    - Creates a swap file and makes it available for swapping
+    - Creates a swap file and makes it available for swapping.
     - Does not create an fstab entry for persistence.
 options:
     path:
@@ -242,8 +242,7 @@ class SwapFileModule():
                     self.changed = True
                 else:
                     msg = 'Size of temp swap file is not correct. You'
-                    msg += ' need 2*<swap file size> of free space'
-                    msg += ' if the swap file already exists'
+                    msg += ' must have <swap file size> of free space'
                     self.fail(msg)
             else:
                 self.fail(err)
