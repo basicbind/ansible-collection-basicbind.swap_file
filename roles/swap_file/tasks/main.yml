@@ -1,0 +1,15 @@
+---
+- name: 'Run basicbind.swap_file.swap_file module'
+  basicbind.swap_file.swap_file:
+    path: '{{ swap_file_path }}'
+    size: '{{ swap_file_size }}'
+    priority: '{{ swap_file_priority }}'
+    state: '{{ swap_file_state }}'
+
+- name: Ensure swap file entry is in fstab
+  ansible.posix.mount:
+    path: none
+    src: '{{ swap_file_path }}'
+    fstype: 'swap'
+    opts: 'defaults,pri={{ swap_file_priority }}'
+    state: '{{ swap_file_state }}'
