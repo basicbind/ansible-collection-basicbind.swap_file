@@ -161,18 +161,18 @@ class SwapFileModule():
     def size(self, size):
         """Sets the _size attribute and validates it"""
         try:
-            # We ensure the size is a multiple of 1Mebibyte
-            MB = 1024*1024
             size_in_bytes = formatters.human_to_bytes(size,
                                                             default_unit=self._SIZE_DEFAULT_UNIT,
                                                             isbits=False)
-            self._size_in_m = round(size_in_bytes/MB)
-            self._size_in_bytes = self._size_in_m * MB
 
         except ValueError as e:
             self.fail(converters.to_text(e))
         else:
-            self._size_in_m = int(int(self._size_in_bytes) / (1024 * 1024))
+            # We ensure the size is a multiple of 1Mebibyte
+            MB = 1024*1024
+            
+            self._size_in_m = int(round(size_in_bytes/MB))
+            self._size_in_bytes = int(self._size_in_m * MB)
             self._size = size
             
 
