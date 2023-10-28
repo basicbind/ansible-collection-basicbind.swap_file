@@ -3,11 +3,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 DOCUMENTATION:
-    module: basicbind.swap_file.swap_file
+    module: swap_file
 
     short_description: Creates a swap file
+    version_added: "1.0.0"
     description:
-        - Creates a swap file and makes it available for swapping
+        - Creates a swap file and makes it available for swapping.
         - Does not create an fstab entry for persistence.
     options:
         path:
@@ -30,11 +31,12 @@ DOCUMENTATION:
         size:
             description:
                 - Sets the size of the swap file in human readable form
-                - 1M, 1MB, 1G, 1GB = 1 Mebibytes and 1 Gibibytes
+                - 1M, 1MB, 1G, 1GB = 1 MiB and 1 GiB
                 - Must not use lower case "b" in the suffix unless "b" is
                   the only suffix. In which case the size is interpreted
                   as bytes
-                - If suffix is missing. size is assumed to be in Gibibytes
+                - If suffix is missing. size is assumed to be in GiB
+                - is rounded to the nearest MiB
             required: true
             type: str
         state:
@@ -65,6 +67,7 @@ EXAMPLES:
     path: /swapfile
     state: absent
 ```
+
 ```yaml
 RETURN:
     path:
@@ -73,7 +76,7 @@ RETURN:
         returned: always
         sample: '/swapfile'
     size:
-        description: The size in bytes of the swap file
+        description: The size in bytes of the created swap file
         type: int
         returned: When state == present
         sample: '1073741824'
