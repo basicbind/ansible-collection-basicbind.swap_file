@@ -1,0 +1,10 @@
+ancestor: 1.0.0
+releases:
+  1.0.1:
+    release_date: '2023-10-28'
+    changes:
+      release_summary: swap_file module bug fix
+      bugfixes:
+        - swap_file - Fixed bug where swap_file module failed when given
+                      a size that wasn't a multiple of 1MiB. size is now
+                      rounded to nearest MiB
