@@ -1,9 +1,9 @@
 namespace: basicbind
 name: swap_file
-version: 1.0.1
+version: 1.1.0
 readme: README.md
 authors:
-  - basicbind <https://github.com/basicbind>
+  - D.T <https://github.com/basicbind>
 description: Collection for managing swap files
 license:
   - GPL-3.0-only

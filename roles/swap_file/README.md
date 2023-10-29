@@ -68,4 +68,4 @@ GPL-3.0-only
 
 Author Information
 ------------------
-basicbind - https://github.com/basicbind
+D.T - https://github.com/basicbind

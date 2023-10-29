@@ -59,9 +59,9 @@ DOCUMENTATION:
                   fallocate(1) may be interpreted as files with holes too
                   depending of the filesystem." which would cause swapon
                   to fail. man swapon'
-                - 'If you you choose either "dd" or "fallocate" when creating
+                - 'If you choose either "dd" or "fallocate" when creating
                   a swap file on btrfs you will also need to have the "chattr"
-                  utility installed.'
+                  utility installed on the target system.'
             required: false
             type: str
             choices: [ dd, fallocate ]
@@ -72,7 +72,7 @@ DOCUMENTATION:
           file will normally be removed if a failure occurs or when it
           is moved into place.
     author:
-        - basicbind (https://github.com/basicbind)
+        - D.T (https://github.com/basicbind)
 ```
 
 ```yaml

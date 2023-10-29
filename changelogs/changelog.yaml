@@ -8,3 +8,12 @@ releases:
         - swap_file - Fixed bug where swap_file module failed when given
                       a size that wasn't a multiple of 1MiB. size is now
                       rounded to nearest MiB
+  1.1.0:
+    release_date: '2023-10-29'
+    changes:
+      release_summary: Added create_cmd option to swap_file module and role
+      minor_changes:
+        - swap_file - Added "create_cmd" option allowing user to choose between
+                      "fallocate" or "dd" to create swap file
+
+
