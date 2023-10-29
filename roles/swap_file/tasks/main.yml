@@ -5,6 +5,7 @@
     size: '{{ swap_file_size }}'
     priority: '{{ swap_file_priority }}'
     state: '{{ swap_file_state }}'
+    create_cmd: '{{ swap_file_create_cmd }}'
 
 - name: Ensure swap file entry is in fstab
   ansible.posix.mount:

@@ -10,4 +10,10 @@ swap_file_state: 'present'
 swap_file_size: '1G'
 
 # Priority for the swap file. "Higher values indicate higher priority".
-swap_file_priority: -1 
+swap_file_priority: -1
+
+# Choose between using fallocate and dd to create the swap file.
+# On btrfs the default is to use the btrfs command. If you choose
+# dd or fallocate when creating a swap file on btrfs, you will
+# also need to have the chattr utility installed
+swap_file_create_cmd: '{{ omit }}'

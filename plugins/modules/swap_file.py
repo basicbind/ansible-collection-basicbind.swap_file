@@ -35,20 +35,44 @@ options:
     size:
         description:
             - Sets the size of the swap file in human readable form
-            - 1M, 1MB, 1G, 1GB = 1 MiB and 1 GiB
+            - Valid size suffixes = Y, Z, E, P, T, G, M, K, B
+            - 1M/1MB = 1 Mebibyte. 1G/1GB = 1 Gibibyte
             - Must not use lower case "b" in the suffix unless "b" is
               the only suffix. In which case the size is interpreted
               as bytes
-            - If suffix is missing. size is assumed to be in GiB
-            - is rounded to the nearest MiB
+            - If suffix is missing. size is assumed to be in Gibibytes
+            - Given size is rounded to the nearest MiB
         required: true
         type: str
     state:
-        description: Controls whether to create or remove the swap file
+        description:
+            - Controls whether to create or remove the swap file
         required: false
         type: str
         choices: [ absent, present ]
         default: present
+    create_cmd:
+        description:
+            - 'By default the module uses dd to create the swap file on
+              all filesystems except btrfs, where it uses the btrfs
+              command. You can override this behaviour by choosing the
+              command with this option.'
+            - 'fallocate is faster but "Preallocated files created by
+              fallocate(1) may be interpreted as files with holes too
+              depending of the filesystem." which would cause swapon
+              to fail. man swapon'
+            - 'If you you choose either "dd" or "fallocate" when creating
+              a swap file on btrfs you will also need to have the "chattr"
+              utility installed.'
+        required: false
+        type: str
+        choices: [ dd, fallocate ]
+        default: null
+notes:
+    - The swap file is first created temporarily in the same directory
+      it will live, with the name prefix ".ansible_swap_file". This
+      file will normally be removed if a failure occurs or when it
+      is moved into place.
 author:
     - basicbind (https://github.com/basicbind)
 '''
@@ -69,6 +93,12 @@ EXAMPLES = r'''
   basicbind.swap_file.swap_file:
     path: /swapfile
     state: absent
+
+- name: Use fallocate to create swap file
+  basicbind.swap_file.swap_file:
+    path: /swapfile
+    size: 2G
+    create_cmd: fallocate
 '''
 
 RETURN = r'''
@@ -111,7 +141,7 @@ class SwapFileModule():
         self.priority = module.params['priority']
         self.size = module.params['size']
         self.state = module.params['state']
-
+        self.create_cmd = module.params.get('create_cmd', None)
 
     @property
     def path(self):
@@ -175,6 +205,21 @@ class SwapFileModule():
             self._size_in_bytes = int(self._size_in_m * MB)
             self._size = size
             
+    @property
+    def create_cmd(self):
+        return self._create_cmd
+
+    
+    @create_cmd.setter
+    def create_cmd(self, create_cmd):
+        create_cmd_opts = ['dd', 'fallocate']
+        if create_cmd is not None:
+            if create_cmd in create_cmd_opts:
+                self._create_cmd = create_cmd
+            else:
+                self.fail('create_cmd must be one of [%s]' % ','.join(create_cmd_opts))
+        else:
+            self._create_cmd = None
 
     def absent(self):
         """Deactivates and removes swap file"""
@@ -195,44 +240,65 @@ class SwapFileModule():
                 dir=os.path.dirname(self.path)
             )
             self.module.add_cleanup_file(tmpfile)
-
-
-            create_args_dict = {
-                'default': {
-                    'cmd': 'dd',
-                    'opts': [
+            
+            args_dict = dict(
+                dd=dict(
+                    cmd='dd',
+                    opts=[
                         'if=/dev/zero',
                         'of=%s' % tmpfile,
                         'bs=1MiB',
                         'count=%s' % self._size_in_m
                     ]
-                },
-                'btrfs': {
-                    'cmd': 'btrfs',
-                    'opts': [
+                ),
+                fallocate=dict(
+                    cmd='fallocate',
+                    opts=[
+                        '--length',
+                        '%sMiB' % self._size_in_m,
+                        tmpfile
+                    ]
+                ),
+                btrfs=dict(
+                    cmd='btrfs',
+                    opts=[
                         'filesystem',
                         'mkswapfile',
                         '--size',
                         '%sm' % self._size_in_m,
                         tmpfile
                     ]
-                }
-            }
+                )
+            )
+
+            create_args_dict = args_dict['dd']
+            
             #["ext4", "xfs", "btrfs"]
             fs = self.get_path_filesystem(self.path)
-            create_args = create_args_dict.get(
-                    fs,
-                    create_args_dict["default"]
-            )
-            args = [ self.module.get_bin_path(create_args['cmd']) ]
-            args += create_args['opts']
             
-            if create_args['cmd'] == 'btrfs':
+            nocow = False
+            if fs == 'btrfs':
+                create_args_dict = args_dict['btrfs']
+                nocow = True
+            
+            if self.create_cmd is not None:
+                create_args_dict = args_dict[self.create_cmd]
+
+            if create_args_dict['cmd'] == 'btrfs':
                 try:
                     os.close(tmpfd)
                     os.remove(tmpfile)
                 except OSError as e:
                     self.fail(converters.to_text(e))
+            elif nocow:
+                chattr_bin = self.module.get_bin_path('chattr')
+                chattr_args = [chattr_bin, '+C', tmpfile]
+                rc, out, err = self.module.run_command(chattr_args)
+                if rc != 0:
+                    self.fail('Unable to set No_COW attribute on swap file')
+            
+            args = [ self.module.get_bin_path(create_args_dict['cmd']) ]
+            args += create_args_dict['opts']
             
             rc, out, err = self.module.run_command(args)
             if rc == 0:
@@ -458,7 +524,8 @@ def main():
         path=dict(type='str', required=True),
         priority=dict(type='int', required=False, default=-1),
         size=dict(type='str', required=True),
-        state=dict(type='str', required=False, choices=['absent', 'present'], default='present')
+        state=dict(type='str', required=False, choices=['absent', 'present'], default='present'),
+        create_cmd=dict(type='str', required=False, choices=['dd', 'fallocate'])
     )
 
     # TODO Support check mode

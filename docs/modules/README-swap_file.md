@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 ```yaml
 # Copyright: (c) 2023, basicbind <https://github.com/basicbind>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -31,20 +33,44 @@ DOCUMENTATION:
         size:
             description:
                 - Sets the size of the swap file in human readable form
-                - 1M, 1MB, 1G, 1GB = 1 MiB and 1 GiB
+                - Valid size suffixes = Y, Z, E, P, T, G, M, K, B
+                - 1M/1MB = 1 Mebibyte. 1G/1GB = 1 Gibibyte
                 - Must not use lower case "b" in the suffix unless "b" is
                   the only suffix. In which case the size is interpreted
                   as bytes
-                - If suffix is missing. size is assumed to be in GiB
-                - is rounded to the nearest MiB
+                - If suffix is missing. size is assumed to be in Gibibytes
+                - Given size is rounded to the nearest MiB
             required: true
             type: str
         state:
-            description: Controls whether to create or remove the swap file
+            description:
+                - Controls whether to create or remove the swap file
             required: false
             type: str
             choices: [ absent, present ]
             default: present
+        create_cmd:
+            description:
+                - 'By default the module uses dd to create the swap file on
+                  all filesystems except btrfs, where it uses the btrfs
+                  command. You can override this behaviour by choosing the
+                  command with this option.'
+                - 'fallocate is faster but "Preallocated files created by
+                  fallocate(1) may be interpreted as files with holes too
+                  depending of the filesystem." which would cause swapon
+                  to fail. man swapon'
+                - 'If you you choose either "dd" or "fallocate" when creating
+                  a swap file on btrfs you will also need to have the "chattr"
+                  utility installed.'
+            required: false
+            type: str
+            choices: [ dd, fallocate ]
+            default: null
+    notes:
+        - The swap file is first created temporarily in the same directory
+          it will live, with the name prefix ".ansible_swap_file". This
+          file will normally be removed if a failure occurs or when it
+          is moved into place.
     author:
         - basicbind (https://github.com/basicbind)
 ```
@@ -66,6 +92,12 @@ EXAMPLES:
   basicbind.swap_file.swap_file:
     path: /swapfile
     state: absent
+
+- name: Use fallocate to create swap file
+  basicbind.swap_file.swap_file:
+    path: /swapfile
+    size: 2G
+    create_cmd: fallocate
 ```
 
 ```yaml
