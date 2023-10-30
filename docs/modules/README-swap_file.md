@@ -32,6 +32,7 @@ DOCUMENTATION:
             default: -1
         size:
             description:
+                - required if state == present
                 - Sets the size of the swap file in human readable form
                 - Valid size suffixes = Y, Z, E, P, T, G, M, K, B
                 - 1M/1MB = 1 Mebibyte. 1G/1GB = 1 Gibibyte

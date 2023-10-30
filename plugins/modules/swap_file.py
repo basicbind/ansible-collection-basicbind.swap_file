@@ -34,6 +34,7 @@ options:
         default: -1
     size:
         description:
+            - required if state == present
             - Sets the size of the swap file in human readable form
             - Valid size suffixes = Y, Z, E, P, T, G, M, K, B
             - 1M/1MB = 1 Mebibyte. 1G/1GB = 1 Gibibyte
@@ -42,8 +43,9 @@ options:
               as bytes
             - If suffix is missing. size is assumed to be in Gibibytes
             - Given size is rounded to the nearest MiB
-        required: true
+        required: false
         type: str
+        default: null
     state:
         description:
             - Controls whether to create or remove the swap file
@@ -139,9 +141,10 @@ class SwapFileModule():
         self.module = module
         self.path = module.params['path']
         self.priority = module.params['priority']
-        self.size = module.params['size']
         self.state = module.params['state']
+        self.size = module.params['size']
         self.create_cmd = module.params.get('create_cmd', None)
+
 
     @property
     def path(self):
@@ -190,20 +193,27 @@ class SwapFileModule():
     @size.setter
     def size(self, size):
         """Sets the _size attribute and validates it"""
-        try:
-            size_in_bytes = formatters.human_to_bytes(size,
-                                                            default_unit=self._SIZE_DEFAULT_UNIT,
-                                                            isbits=False)
+        size_in_m = None
+        size_in_bytes = None
 
-        except ValueError as e:
-            self.fail(converters.to_text(e))
-        else:
-            # We ensure the size is a multiple of 1Mebibyte
-            MB = 1024*1024
-            
-            self._size_in_m = int(round(size_in_bytes/MB))
-            self._size_in_bytes = int(self._size_in_m * MB)
-            self._size = size
+        if size is not None or self.state == 'present':
+            try:
+                size_in_bytes = formatters.human_to_bytes(size,
+                                                                default_unit=self._SIZE_DEFAULT_UNIT,
+                                                                isbits=False)
+
+            except ValueError as e:
+                self.fail(converters.to_text(e))
+            else:
+                # We ensure the size is a multiple of 1Mebibyte
+                MB = 1024*1024
+
+                size_in_m = int(round(size_in_bytes/MB))
+                size_in_bytes = int(size_in_m * MB)
+
+        self._size = size
+        self._size_in_m = size_in_m
+        self._size_in_bytes = size_in_bytes
             
     @property
     def create_cmd(self):
@@ -523,7 +533,7 @@ def main():
     module_args = dict(
         path=dict(type='str', required=True),
         priority=dict(type='int', required=False, default=-1),
-        size=dict(type='str', required=True),
+        size=dict(type='str', required=False),
         state=dict(type='str', required=False, choices=['absent', 'present'], default='present'),
         create_cmd=dict(type='str', required=False, choices=['dd', 'fallocate'])
     )
@@ -531,6 +541,7 @@ def main():
     # TODO Support check mode
     module = AnsibleModule(
         argument_spec=module_args,
+        required_if=[('state', 'present', ('size',))],
         supports_check_mode=False
     )
 
