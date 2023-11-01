@@ -67,6 +67,12 @@ DOCUMENTATION:
             type: str
             choices: [ dd, fallocate ]
             default: null
+    attributes:
+        check_mode:
+            description:
+                - Can run in check_mode and return changed status
+                  prediction without modifying target
+            support: full
     notes:
         - The swap file is first created temporarily in the same directory
           it will live, with the name prefix ".ansible_swap_file". This
