@@ -1,19 +1,30 @@
-ancestor: 1.0.0
+ancestor: '1.0.0'
 releases:
   1.0.1:
     release_date: '2023-10-28'
     changes:
-      release_summary: swap_file module bug fix
+      release_summary: 'swap_file module bug fix'
       bugfixes:
-        - swap_file - Fixed bug where swap_file module failed when given
+        - "swap_file - Fixed bug where swap_file module failed when given
                       a size that wasn't a multiple of 1MiB. size is now
-                      rounded to nearest MiB
+                      rounded to nearest MiB"
   1.1.0:
     release_date: '2023-10-29'
     changes:
-      release_summary: Added create_cmd option to swap_file module and role
+      release_summary: 'Added create_cmd option to swap_file module and role'
       minor_changes:
-        - swap_file - Added "create_cmd" option allowing user to choose between
-                      "fallocate" or "dd" to create swap file
-
-
+        - 'swap_file - Added "create_cmd" option allowing user to choose between
+                      "fallocate" or "dd" to create swap file'
+  1.2.0:
+    release_date: '2023-11-01'
+    changed:
+      release_summary: 'Added check_mode support and Bug Fixes'
+      minor_changes:
+        - 'swap_file - Added check_mode support'
+      bugfixes:
+        - 'swap_file - Fixed bug where a new swap file could replace
+                       an old one and swapon would fail. For instance,
+                       if the user tried fallocate on a filesystem where
+                       the newly created swap file would not be seen as
+                       a useable swap file. swapon is now attempted on
+                       the new swap file before replacing the old one.'

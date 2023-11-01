@@ -47,7 +47,6 @@ Example Playbook
     swap_file_path: '/swapfile'
     swap_file_state: 'present'
     swap_file_size: '2G'
-
   roles:
     - basicbind.swap_file.swap_file
 
@@ -58,6 +57,8 @@ Example Playbook
     swap_file_state: 'present'
     swap_file_size: '2G'
     swap_file_create_cmd: 'fallocate'
+  roles:
+    - basicbind.swap_file.swap_file
     
 ```
 

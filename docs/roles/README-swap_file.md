@@ -25,6 +25,12 @@ swap_file_size: '1G'
 
 # Priority for the swap file. "Higher values indicate higher priority".
 swap_file_priority: -1 
+
+# Choose between using "fallocate" and "dd" to create the swap file.
+# On btrfs the default is to use the btrfs command. If you choose
+# dd or fallocate when creating a swap file on btrfs, you will
+# also need to have the chattr utility installed
+swap_file_create_cmd: '{{ omit }}'
 ```
 
 Dependencies
@@ -43,6 +49,17 @@ Example Playbook
     swap_file_size: '2G'
   roles:
     - basicbind.swap_file.swap_file
+
+# Create a swap file using the "fallocate" command
+- hosts: servers
+  vars:
+    swap_file_path: '/swapfile'
+    swap_file_state: 'present'
+    swap_file_size: '2G'
+    swap_file_create_cmd: 'fallocate'
+  roles:
+    - basicbind.swap_file.swap_file
+    
 ```
 
 License
@@ -52,4 +69,4 @@ GPL-3.0-only
 
 Author Information
 ------------------
-basicbind - https://github.com/basicbind
+D.T - https://github.com/basicbind

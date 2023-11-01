@@ -143,10 +143,9 @@ class SwapFile():
     
     def allocate(self, size_in_mib, create_cmd=None):
         """Creates the swap file based on the filesystem it is being created on"""
-
-        # TODO we currently assume the file exists at the set path.
-        # since we are only currently called with a pre-existing file
-        # it's fine but may this anyway
+        # We currently assume the file exists at the set path.
+        # Since we are currently only called with a pre-existing file
+        # it's fine, but this may change
         args_dict = dict(
             dd=dict(
                 cmd='dd',
