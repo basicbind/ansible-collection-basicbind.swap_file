@@ -553,10 +553,14 @@ class SwapFileModule():
                     tmp_swap_file.mkswap()
                     tmp_swap_file.swap_on(priority=self._desired_priority)
                     tmp_swap_file.swap_off()
-                    self._swap_file.swap_off()
-                    self._module.atomic_move(tmp_swap_file_path, self._desired_path)
                 except Exception as e:
-                    self._fail('Swap file creation failed: %s' % converters(e))
+                    self._fail('Swap file creation failed: %s' % converters.to_text(e))
+                try:
+                    self._swap_file.swap_off()
+                except Exception as e:
+                    self._fail('Could not deactivate old swap file. Was it mounted over? Is the path to it accessible?')
+                
+                self._module.atomic_move(tmp_swap_file_path, self._desired_path)
             
             self._changed = True
 
