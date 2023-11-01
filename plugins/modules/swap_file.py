@@ -391,7 +391,10 @@ class SwapFile():
             if rc == 0:
                 changed = True
             else:
-                raise RuntimeError(err)
+                err_msg = 'Could not deactivate swap file. Was it'
+                err_msg += ' mounted over? Is the path to it accessible?'
+                err_msg += ' %s' % err)
+                raise RuntimeError(err_msg)
 
         return changed
 
@@ -558,7 +561,7 @@ class SwapFileModule():
                 try:
                     self._swap_file.swap_off()
                 except Exception as e:
-                    self._fail('Could not deactivate old swap file. Was it mounted over? Is the path to it accessible?')
+                    self._fail(converters.to_text(e))
                 
                 self._module.atomic_move(tmp_swap_file_path, self._desired_path)
             
@@ -597,7 +600,6 @@ def main():
         create_cmd=dict(type='str', required=False, choices=['dd', 'fallocate'])
     )
 
-    # TODO Support check mode
     module = AnsibleModule(
         argument_spec=module_args,
         required_if=[('state', 'present', ('size',))],

@@ -14,3 +14,7 @@ basicbind.swap_file.swap_file | Creates a swap file and makes it available for s
 Name | Description
 --- | ---
 basicbind.swap_file.swap_file | Uses the basicbind.swap_file.swap_file module to create a swap file and make it available for swapping. Also adds an fstab entry for persistence
+
+Author Information
+------------------
+D.T - https://github.com/basicbind
