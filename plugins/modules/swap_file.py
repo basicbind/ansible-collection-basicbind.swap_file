@@ -393,7 +393,7 @@ class SwapFile():
             else:
                 err_msg = 'Could not deactivate swap file. Was it'
                 err_msg += ' mounted over? Is the path to it accessible?'
-                err_msg += ' %s' % err)
+                err_msg += ' %s' % err
                 raise RuntimeError(err_msg)
 
         return changed
