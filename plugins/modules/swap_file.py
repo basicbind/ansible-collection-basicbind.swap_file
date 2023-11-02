@@ -409,8 +409,8 @@ class SwapFileModule():
     def __init__(self, module):
         self._changed = False
         self._module = module
-        self._desired_path = module.params['path']
         self._desired_state = module.params['state']
+        self._desired_path = module.params['path']
         self._desired_size = module.params['size']
         self._desired_priority = module.params['priority']
         self._desired_create_cmd = module.params['create_cmd']
@@ -532,6 +532,10 @@ class SwapFileModule():
     def _present(self):
         """Ensures swap file is created and activated""" 
         
+        dir_path = os.path.dirname(self._desired_path)
+        if not os.path.isdir(dir_path):
+            self._fail('Directory "%s" does not exist' % dir_path)
+
         # If the swap file doesn't exist  or the size isn't correct
         # we create it
         if ((not self._swap_file.get_status('exists'))
@@ -540,10 +544,13 @@ class SwapFileModule():
                 # We create the temporary swap file in the same location
                 # the swap file will ultimately reside to ensure there will
                 # be no changes to the file on atomic_move()
-                (tmpfd, tmp_swap_file_path) = tempfile.mkstemp(
-                    prefix=self._TMP_SWAP_FILE_PREFIX,
-                    dir=os.path.dirname(self._desired_path)
-                )
+                try:
+                    (tmpfd, tmp_swap_file_path) = tempfile.mkstemp(
+                        prefix=self._TMP_SWAP_FILE_PREFIX,
+                        dir=os.path.dirname(self._desired_path)
+                    )
+                except Exception as e:
+                    self._fail(converters.to_text(e))
                 try:
                     os.close(tmpfd)
                 except Exception:
