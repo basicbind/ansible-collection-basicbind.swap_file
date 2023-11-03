@@ -57,7 +57,7 @@ options:
         description:
             - 'By default the module uses dd to create the swap file on
               all filesystems except btrfs, where it uses the btrfs
-              command. You can override this behaviour by choosing the
+              command. You can override this behavior by choosing the
               command with this option.'
             - 'fallocate is faster but "Preallocated files created by
               fallocate(1) may be interpreted as files with holes too
@@ -140,52 +140,52 @@ class SwapFile():
     def __init__(self, module, path):
         self._module = module
         self._path = path
-    
+
     def allocate(self, size_in_mib, create_cmd=None):
         """Creates the swap file based on the filesystem it is being created on"""
         # We currently assume the file exists at the set path.
         # Since we are currently only called with a pre-existing file
         # it's fine, but this may change
-        args_dict = dict(
-            dd=dict(
-                cmd='dd',
-                opts=[
+        args_dict = {
+            'dd': {
+                'cmd': 'dd',
+                'opts': [
                     'if=/dev/zero',
                     'of=%s' % self._path,
                     'bs=1MiB',
                     'count=%s' % size_in_mib
                 ]
-            ),
-            fallocate=dict(
-                cmd='fallocate',
-                opts=[
+            },
+            'fallocate': {
+                'cmd': 'fallocate',
+                'opts': [
                     '--length',
                     '%sMiB' % size_in_mib,
                     self._path
                 ]
-            ),
-            btrfs=dict(
-                cmd='btrfs',
-                opts=[
+            },
+            'btrfs': {
+                'cmd': 'btrfs',
+                'opts': [
                     'filesystem',
                     'mkswapfile',
                     '--size',
                     '%sm' % size_in_mib,
                     self._path
                 ]
-            )
-        )
+            }
+        }
 
         create_args_dict = args_dict['dd']
-        
+
         #["ext4", "xfs", "btrfs"]
         fs = self.get_path_filesystem(self._path)
-        
+
         nocow = False
         if fs == 'btrfs':
             create_args_dict = args_dict['btrfs']
             nocow = True
-        
+
         if create_cmd is not None:
             create_args_dict = args_dict[create_cmd]
 
@@ -197,10 +197,10 @@ class SwapFile():
             rc, out, err = self._module.run_command(chattr_args)
             if rc != 0:
                 raise RuntimeError('Unable to set No_COW attribute on swap file')
-        
+
         args = [ self._module.get_bin_path(create_args_dict['cmd']) ]
         args += create_args_dict['opts']
-        
+
         rc, out, err = self._module.run_command(args)
         if rc == 0:
             # The create operation can succeed but still fail to
@@ -209,7 +209,7 @@ class SwapFile():
             # capacity for the file, btrfs will exit cleanly but
             # create a 0 byte file. We test the size here to ensure
             # it was properly created
-            if (os.path.getsize(self._path) == formatters.human_to_bytes('%sM' % size_in_mib)):
+            if os.path.getsize(self._path) == formatters.human_to_bytes('%sM' % size_in_mib):
                 return
             else:
                 msg = 'Size of temp swap file is not correct. You'
@@ -217,8 +217,8 @@ class SwapFile():
                 raise RuntimeError(msg)
         else:
             raise RuntimeError(err)
-    
-    
+
+
     def get_path_filesystem(self, path):
         """Returns the type of filesystem the given path resides on"""
         stat_bin = self._module.get_bin_path('stat', required=True)
@@ -234,20 +234,20 @@ class SwapFile():
         if rc == 0:
             return out.rstrip()
         raise RuntimeError(err)
-    
+
 
     def get_status(self, opt):
         """Returns the current status of the on disk swap file"""
-        default_status = dict(
-            exists=False,
-            is_on=False,
-            priority=None,
-            size=None,
-            is_formatted=False
-        )
-        
+        default_status = {
+            'exists': False,
+            'is_on': False,
+            'priority': None,
+            'size': None,
+            'is_formatted': False
+        }
+
         status = default_status[opt]
-        
+
         # Unless the swap file exists there
         # is no status to retrieve
         if os.path.exists(self._path):
@@ -255,12 +255,12 @@ class SwapFile():
             # If we get to this point, the file
             # must exist
             if opt == 'exists':
-                    status = True
-                    
+                status = True
+
             # Determine swap file size
             elif opt == 'size':
                 status = os.path.getsize(self._path)
-                    
+
             # Determine if swap area is on file
             elif opt == 'is_formatted':
                 blkid_bin = self._module.get_bin_path('blkid')
@@ -278,7 +278,7 @@ class SwapFile():
                 else:
                     if out.rstrip() == 'swap':
                         status = True
-            
+
             # Determine if swap file is activated or its current priority
             elif opt == 'is_on' or opt == 'priority':
                 swapon_bin = self._module.get_bin_path('swapon')
@@ -299,14 +299,14 @@ class SwapFile():
                                 status = priority
 
         return status
-    
+
 
     def mkswap(self):
         """Creates a swap area on swap file"""
         changed = False
         mkswap_bin = self._module.get_bin_path('mkswap', required=True)
         mkswap_args = [mkswap_bin, self._path]
-        
+
         if not self.get_status('is_formatted'):
             if self._module.check_mode:
                 rc = 0
@@ -316,9 +316,9 @@ class SwapFile():
                 changed = True
             else:
                 raise RuntimeError(err)
-    
+
         return changed
-    
+
 
     def remove(self):
         """Removes the swap file"""
@@ -328,7 +328,7 @@ class SwapFile():
                 os.unlink(self._path)
             changed = True
         return changed
-    
+
 
     def set_perms(self):
         changed = False
@@ -341,13 +341,13 @@ class SwapFile():
                 'attributes': None
         }
         changed |= self._module.set_fs_attributes_if_different(file_args, changed)
-    
+
         return changed
 
-    
+
     def swap_on(self, priority):
         """Enables swapping on swap file and ensures priority is set correctly"""
-        changed = False    
+        changed = False
         is_on = self.get_status('is_on')
         current_priority = self.get_status('priority')
         requested_priority = priority
@@ -361,9 +361,9 @@ class SwapFile():
                     and (int (requested_priority) >= 0 or int(current_priority) >= 0))):
             # We could be running swapon to change the priority on a currently
             # enabled swap. If this is the case we want to swapoff first
-            if (is_on):
+            if is_on:
                 self.swap_off()
-       
+
             swapon_bin = self._module.get_bin_path('swapon')
             swapon_args = [swapon_bin, '-p', str(requested_priority), self._path]
 
@@ -375,14 +375,14 @@ class SwapFile():
                 changed = True
             else:
                 raise RuntimeError(err)
-        
+
         return changed
-    
+
     def swap_off(self):
         changed = False
         swapoff_bin = self._module.get_bin_path('swapoff')
         swapoff_args = [swapoff_bin, self._path]
-        
+
         if self.get_status('is_on'):
             if self._module.check_mode:
                 rc = 0
@@ -400,7 +400,7 @@ class SwapFile():
 
 
 class SwapFileModule():
-    
+
     _SIZE_DEFAULT_UNIT = 'G'
     _PRIORITY_MIN = -1
     _PRIORITY_MAX = 32767
@@ -416,7 +416,7 @@ class SwapFileModule():
         self._desired_create_cmd = module.params['create_cmd']
         self._swap_file = SwapFile(module=self._module, path=self._desired_path)
 
-    
+
     @property
     def _desired_path(self):
         """Returns the _path attribute"""
@@ -426,7 +426,7 @@ class SwapFileModule():
     @_desired_path.setter
     def _desired_path(self, path):
         """Sets the _path attribute and validates it"""
-        # We verify that the path is an absolute path and that if the 
+        # We verify that the path is an absolute path and that if the
         # swap file path exists, it is a regular file
         if os.path.isabs(path):
             path = os.path.realpath(path)
@@ -459,7 +459,7 @@ class SwapFileModule():
     def _desired_size_in_mib(self):
         return self.__desired_size_in_mib
 
-    
+
     @property
     def _desired_size_in_bytes(self):
         return self.__desired_size_in_bytes
@@ -484,7 +484,7 @@ class SwapFileModule():
                     default_unit=self._SIZE_DEFAULT_UNIT,
                     isbits=False
                 )
-            except Exception as e:
+            except ValueError as e:
                 self._fail(converters.to_text(e))
             else:
                 # We ensure the size is a multiple of 1Mebibyte
@@ -496,12 +496,12 @@ class SwapFileModule():
         self.__desired_size_in_mib = size_in_mib
         self.__desired_size_in_bytes = size_in_bytes
 
-            
+
     @property
     def _desired_create_cmd(self):
         return self.__desired_create_cmd
 
-    
+
     @_desired_create_cmd.setter
     def _desired_create_cmd(self, create_cmd):
         create_cmd_opts = ['dd', 'fallocate']
@@ -523,15 +523,13 @@ class SwapFileModule():
 
     def _fail(self, msg):
         """Responsible for handling module failures"""
-        fail_result = dict(
-                msg=msg
-        )
+        fail_result = dict(msg=msg)
         self._module.fail_json(**fail_result)
-   
+
 
     def _present(self):
         """Ensures swap file is created and activated""" 
-        
+
         dir_path = os.path.dirname(self._desired_path)
         if not os.path.isdir(dir_path):
             self._fail('Directory "%s" does not exist' % dir_path)
@@ -539,8 +537,8 @@ class SwapFileModule():
         # If the swap file doesn't exist  or the size isn't correct
         # we create it
         if ((not self._swap_file.get_status('exists'))
-                or not (self._swap_file.get_status('size') == self._desired_size_in_bytes)):
-            if not self._module.check_mode:                
+                or not self._swap_file.get_status('size') == self._desired_size_in_bytes):
+            if not self._module.check_mode:
                 # We create the temporary swap file in the same location
                 # the swap file will ultimately reside to ensure there will
                 # be no changes to the file on atomic_move()
@@ -555,11 +553,14 @@ class SwapFileModule():
                     os.close(tmpfd)
                 except Exception:
                     pass
-                
+
                 self._module.add_cleanup_file( tmp_swap_file_path)
                 try:
                     tmp_swap_file = SwapFile(self._module, path=tmp_swap_file_path)
-                    tmp_swap_file.allocate(size_in_mib=self._desired_size_in_mib, create_cmd=self._desired_create_cmd)
+                    tmp_swap_file.allocate(
+                        size_in_mib=self._desired_size_in_mib,
+                        create_cmd=self._desired_create_cmd
+                    )
                     tmp_swap_file.mkswap()
                     tmp_swap_file.swap_on(priority=self._desired_priority)
                     tmp_swap_file.swap_off()
@@ -569,24 +570,25 @@ class SwapFileModule():
                     self._swap_file.swap_off()
                 except Exception as e:
                     self._fail(converters.to_text(e))
-                
+
                 self._module.atomic_move(tmp_swap_file_path, self._desired_path)
-            
+
             self._changed = True
 
         self._changed |= self._swap_file.mkswap()
         self._changed |= self._swap_file.set_perms()
         self._changed |= self._swap_file.swap_on(priority=self._desired_priority)
-    
-                
+
+
     def run(self):
+        """Responsible for running the function responsible for each state"""
         if self._desired_state == 'present':
             self._present()
         elif self._desired_state == 'absent':
             self._absent()
         else:
             self._fail('Unimplemented state')
-       
+
         result = dict(
             changed=self._changed,
             path=self._desired_path,
@@ -594,10 +596,10 @@ class SwapFileModule():
             priority=self._swap_file.get_status('priority')
         )
         self._module.exit_json(**result)
-    
-    
+
+
 def main():
-   
+
     # The arguments which can be sent by the user
     module_args = dict(
         path=dict(type='str', required=True),
