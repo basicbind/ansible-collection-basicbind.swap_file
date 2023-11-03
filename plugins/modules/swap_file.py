@@ -523,7 +523,7 @@ class SwapFileModule():
 
     def _fail(self, msg):
         """Responsible for handling module failures"""
-        fail_result = dict(msg=msg)
+        fail_result = {'msg': msg}
         self._module.fail_json(**fail_result)
 
 
@@ -589,12 +589,12 @@ class SwapFileModule():
         else:
             self._fail('Unimplemented state')
 
-        result = dict(
-            changed=self._changed,
-            path=self._desired_path,
-            size=self._swap_file.get_status('size'),
-            priority=self._swap_file.get_status('priority')
-        )
+        result = {
+            'changed': self._changed,
+            'path': self._desired_path,
+            'size': self._swap_file.get_status('size'),
+            'priority': self._swap_file.get_status('priority')
+        }
         self._module.exit_json(**result)
 
 
