@@ -1,12 +1,9 @@
-#!/usr/bin/python
-
 ```yaml
-# Copyright: (c) 2023, basicbind <https://github.com/basicbind>
+# Copyright: (c) 2023, D.T <https://github.com/basicbind>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 DOCUMENTATION:
     module: swap_file
-
     short_description: Creates a swap file
     version_added: "1.0.0"
     description:

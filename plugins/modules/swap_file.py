@@ -8,7 +8,6 @@ __metaclass__ = type
 DOCUMENTATION = r'''
 ---
 module: swap_file
-
 short_description: Creates a swap file
 version_added: "1.0.0"
 description:
@@ -134,6 +133,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text import formatters, converters
 import os
 import tempfile
+import errno
 
 class SwapFile():
 
@@ -325,7 +325,17 @@ class SwapFile():
         changed = False
         if self.get_status('exists'):
             if not self._module.check_mode:
-                os.unlink(self._path)
+                try:
+                    os.unlink(self._path)
+                except EnvironmentError as e:
+                    # We only need to raise an exception if the error
+                    # isn't a file not found error. Since we don't want
+                    # the file to exist in the first place. The file
+                    # would of course have had to be removed between
+                    # the time we checked if it exists and us trying to
+                    # remove it. 
+                    if not e.errno == errno.ENOENT:
+                        raise
             changed = True
         return changed
 

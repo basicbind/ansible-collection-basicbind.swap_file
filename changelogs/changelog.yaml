@@ -28,3 +28,11 @@ releases:
                        the newly created swap file would not be seen as
                        a useable swap file. swapon is now attempted on
                        the new swap file before replacing the old one.'
+  1.2.1:
+    release_date: '2023-11-07'
+    changes:
+      release_summary: 'Fixed bug in swap_file module'
+      bugfixes:
+        - 'swap_file - Fixed bug where state==absent failed
+                       when directory of swap file did not
+                       exist'
