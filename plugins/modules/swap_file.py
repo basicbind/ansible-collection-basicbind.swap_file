@@ -134,6 +134,7 @@ from ansible.module_utils.common.text import formatters, converters
 import os
 import tempfile
 import errno
+import signal
 
 class SwapFile():
 
@@ -539,7 +540,6 @@ class SwapFileModule():
 
     def _present(self):
         """Ensures swap file is created and activated""" 
-
         dir_path = os.path.dirname(self._desired_path)
         if not os.path.isdir(dir_path):
             self._fail('Directory "%s" does not exist' % dir_path)
@@ -550,8 +550,7 @@ class SwapFileModule():
                 or not self._swap_file.get_status('size') == self._desired_size_in_bytes):
             if not self._module.check_mode:
                 # We create the temporary swap file in the same location
-                # the swap file will ultimately reside to ensure there will
-                # be no changes to the file on atomic_move()
+                # the swap file will ultimately reside.
                 try:
                     (tmpfd, tmp_swap_file_path) = tempfile.mkstemp(
                         prefix=self._TMP_SWAP_FILE_PREFIX,
@@ -592,6 +591,12 @@ class SwapFileModule():
 
     def run(self):
         """Responsible for running the function responsible for each state"""
+        # If killed, ensure we exit properly to cleanup
+        signal.signal(
+            signal.SIGTERM,
+            lambda signum, frame: self._fail('Killed')
+        )
+
         if self._desired_state == 'present':
             self._present()
         elif self._desired_state == 'absent':
