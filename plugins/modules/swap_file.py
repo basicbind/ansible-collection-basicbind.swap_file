@@ -135,6 +135,7 @@ import os
 import tempfile
 import errno
 import signal
+import sys
 
 class SwapFile():
 
@@ -591,11 +592,28 @@ class SwapFileModule():
 
     def run(self):
         """Responsible for running the function responsible for each state"""
-        # If killed, ensure we exit properly to cleanup
-        signal.signal(
-            signal.SIGTERM,
-            lambda signum, frame: self._fail('Killed')
-        )
+        def _sig_handler(signum, frame):
+            if signum in cleanup_sigs:
+                self._module.do_cleanup_files()
+                signal.signal(signum, original_sig_handlers[signum])
+                # If we caught SIGINT, we should exit with SIGINT
+                if signum == signal.SIGINT:
+                    os.kill(os.getpid(), signal.SIGINT)
+                else:
+                    sys.exit(1)
+            else:
+                raise RuntimeError('Unhandled signal caught')
+
+
+        # Ensure we cleanup if killed/interrupted
+        cleanup_sigs = [
+                signal.SIGTERM,
+                signal.SIGHUP,
+                signal.SIGINT
+        ]
+        original_sig_handlers = {}
+        for signum in cleanup_sigs:
+            original_sig_handlers[signum] = signal.signal(signum, _sig_handler)
 
         if self._desired_state == 'present':
             self._present()
