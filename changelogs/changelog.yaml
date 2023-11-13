@@ -17,7 +17,7 @@ releases:
                       "fallocate" or "dd" to create swap file'
   1.2.0:
     release_date: '2023-11-01'
-    changed:
+    changes:
       release_summary: 'Added check_mode support and Bug Fixes'
       minor_changes:
         - 'swap_file - Added check_mode support'
@@ -36,3 +36,10 @@ releases:
         - 'swap_file - Fixed bug where state==absent failed
                        when directory of swap file did not
                        exist'
+  1.2.2:
+    release_date: '2023-11-12'
+    changes:
+      release_summary: 'Bug fix to ensure cleanup of temp files'
+      bugfixes:
+        - 'swap_file - Ensure temp files are removed if the module
+                       is killed/interrupted'

@@ -78,8 +78,8 @@ attributes:
 notes:
     - The swap file is first created temporarily in the same directory
       it will live, with the name prefix ".ansible_swap_file". This
-      file will normally be removed if a failure occurs or when it
-      is moved into place.
+      file will be removed if a failure/interruption occurs or when it
+      is moved into place
 author:
     - D.T (https://github.com/basicbind)
 '''
@@ -593,16 +593,13 @@ class SwapFileModule():
     def run(self):
         """Responsible for running the function responsible for each state"""
         def _sig_handler(signum, frame):
-            if signum in cleanup_sigs:
-                self._module.do_cleanup_files()
-                signal.signal(signum, original_sig_handlers[signum])
-                # If we caught SIGINT, we should exit with SIGINT
-                if signum == signal.SIGINT:
-                    os.kill(os.getpid(), signal.SIGINT)
-                else:
-                    sys.exit(1)
+            self._module.do_cleanup_files()
+            signal.signal(signum, original_sig_handlers[signum])
+            # If we caught SIGINT, we should exit with SIGINT
+            if signum == signal.SIGINT:
+                os.kill(os.getpid(), signal.SIGINT)
             else:
-                raise RuntimeError('Unhandled signal caught')
+                sys.exit(1)
 
 
         # Ensure we cleanup if killed/interrupted

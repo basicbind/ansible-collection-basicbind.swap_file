@@ -1,7 +1,6 @@
 ```yaml
 # Copyright: (c) 2023, D.T <https://github.com/basicbind>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 DOCUMENTATION:
     module: swap_file
     short_description: Creates a swap file
@@ -38,8 +37,9 @@ DOCUMENTATION:
                   as bytes
                 - If suffix is missing. size is assumed to be in Gibibytes
                 - Given size is rounded to the nearest MiB
-            required: true
+            required: false
             type: str
+            default: null
         state:
             description:
                 - Controls whether to create or remove the swap file
@@ -51,7 +51,7 @@ DOCUMENTATION:
             description:
                 - 'By default the module uses dd to create the swap file on
                   all filesystems except btrfs, where it uses the btrfs
-                  command. You can override this behaviour by choosing the
+                  command. You can override this behavior by choosing the
                   command with this option.'
                 - 'fallocate is faster but "Preallocated files created by
                   fallocate(1) may be interpreted as files with holes too
@@ -73,8 +73,8 @@ DOCUMENTATION:
     notes:
         - The swap file is first created temporarily in the same directory
           it will live, with the name prefix ".ansible_swap_file". This
-          file will normally be removed if a failure occurs or when it
-          is moved into place.
+          file will be removed if a failure/interruption occurs or when it
+          is moved into place
     author:
         - D.T (https://github.com/basicbind)
 ```
