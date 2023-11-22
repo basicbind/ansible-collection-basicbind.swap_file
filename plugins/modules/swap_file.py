@@ -179,7 +179,7 @@ class SwapFile():
         kernel_loose_version = LooseVersion(platform.release())
 
         if fs == 'btrfs':
-            if kernel_loose_version >= LooseVersion(5):
+            if kernel_loose_version >= LooseVersion('5'):
                 nocow = True
                 create_args_dict = args_dict['fallocate']
             else:
@@ -226,20 +226,25 @@ class SwapFile():
 
     def get_path_filesystem(self, path):
         """Returns the type of filesystem the given path resides on"""
-        stat_bin = self._module.get_bin_path('stat', required=True)
-        path_dir = os.path.dirname(path)
-        cmd = [
-            stat_bin,
-            '-f',
-            '-c',
-            '%T',
-            path_dir
-        ]
-        rc, out, err = self._module.run_command(cmd)
-        if rc == 0:
-            return out.rstrip()
-        raise RuntimeError(err)
+        # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
+        # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
+        # Copyright (c), D.T <https://github.com/basicbind> 2023 
+        # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+        # Modified from the AnsibleModule.is_special_selinux_path method
+        try:
+            f = open('/proc/mounts', 'r')
+            mount_data = f.readlines()
+            f.close()
+        except Exception:
+            return None
 
+        path_mount_point = self._module.find_mount_point(path)
+
+        for line in mount_data:
+            (device, mount_point, fstype, options, rest) = line.split(' ', 4)
+            if converters.to_bytes(path_mount_point) == converters.to_bytes(mount_point):
+                return fstype
+        
 
     def get_status(self, opt):
         """Returns the current status of the on disk swap file"""

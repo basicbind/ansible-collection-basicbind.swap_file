@@ -1,5 +1,16 @@
 ---
-- name: 'Run basicbind.swap_file.swap_file module'
+- name: Install required packages block
+  vars:
+    distro_name: '{{ ansible_facts["distribution"] | lower }}'
+    distro_version: '{{ ansible_facts["distribution_major_version"] }}'
+  block:
+    - name: Install required packages
+      ansible.builtin.package:
+        name: '{{ __swap_file_packages_dict[distro_name][distro_version] }}'
+        state: 'present'
+      when: '__swap_file_packages_dict[distro_name][distro_version] is defined'
+
+- name: 'Create and activate swap file'
   basicbind.swap_file.swap_file:
     path: '{{ swap_file_path }}'
     size: '{{ swap_file_size }}'
@@ -7,7 +18,7 @@
     state: '{{ swap_file_state }}'
     create_cmd: '{{ swap_file_create_cmd }}'
 
-- name: Ensure swap file entry is in fstab
+- name: 'Ensure swap file entry is in fstab'
   ansible.posix.mount:
     path: none
     src: '{{ swap_file_path }}'
