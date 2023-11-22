@@ -131,11 +131,13 @@ priority:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text import formatters, converters
+from ansible.module_utils.compat.version import LooseVersion
 import os
 import tempfile
 import errno
 import signal
 import sys
+import platform
 
 class SwapFile():
 
@@ -148,6 +150,7 @@ class SwapFile():
         # We currently assume the file exists at the set path.
         # Since we are currently only called with a pre-existing file
         # it's fine, but this may change
+
         args_dict = {
             'dd': {
                 'cmd': 'dd',
@@ -165,35 +168,35 @@ class SwapFile():
                     '%sMiB' % size_in_mib,
                     self._path
                 ]
-            },
-            'btrfs': {
-                'cmd': 'btrfs',
-                'opts': [
-                    'filesystem',
-                    'mkswapfile',
-                    '--size',
-                    '%sm' % size_in_mib,
-                    self._path
-                ]
             }
         }
 
         create_args_dict = args_dict['dd']
-
+ 
         #["ext4", "xfs", "btrfs"]
         fs = self.get_path_filesystem(self._path)
-
         nocow = False
+        kernel_loose_version = LooseVersion(platform.release())
+
         if fs == 'btrfs':
-            create_args_dict = args_dict['btrfs']
-            nocow = True
+            if kernel_loose_version >= LooseVersion(5):
+                nocow = True
+                create_args_dict = args_dict['fallocate']
+            else:
+                err = 'Kernel version >= 5 needed to support swap files'
+                err += ' on btrfs'
+                raise RuntimeError(err)
+        elif fs == 'xfs':
+            if kernel_loose_version >= LooseVersion('4.18'):
+                create_args_dict = args_dict['fallocate']
+        elif fs == 'ext4':
+            if kernel_loose_version >= LooseVersion('4.18'):
+                create_args_dict = args_dict['fallocate']
 
         if create_cmd is not None:
             create_args_dict = args_dict[create_cmd]
-
-        if create_args_dict['cmd'] == 'btrfs':
-            os.remove(self._path)
-        elif nocow:
+        
+        if nocow:
             chattr_bin = self._module.get_bin_path('chattr')
             chattr_args = [chattr_bin, '+C', self._path]
             rc, out, err = self._module.run_command(chattr_args)
