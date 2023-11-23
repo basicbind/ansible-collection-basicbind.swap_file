@@ -177,13 +177,21 @@ class SwapFile():
 
         create_args_dict = args_dict['dd']
  
+        kernel_version = platform.release()
+        if kernel_version != '':
+            kernel_loose_version = LooseVersion(kernel_version)
+        else:
+            kernel_loose_version = LooseVersion('0')
+
         #["ext4", "xfs", "btrfs"]
         fs = get_path_filesystem(self._path)
         nocow = False
-        kernel_loose_version = LooseVersion(platform.release())
 
         if fs == 'btrfs':
-            if kernel_loose_version >= LooseVersion('5'):
+            # If we can't determine the kernel version
+            # we should still try to create the file
+            if (kernel_loose_version >= LooseVersion('5')
+                    or kernel_loose_version == LooseVersion('0')):
                 nocow = True
                 create_args_dict = args_dict['fallocate']
             else:
