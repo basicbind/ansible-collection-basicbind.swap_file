@@ -54,17 +54,19 @@ options:
         default: present
     create_cmd:
         description:
-            - 'By default the module uses dd to create the swap file on
-              all filesystems except btrfs, where it uses the btrfs
-              command. You can override this behavior by choosing the
-              command with this option.'
+            - 'By default the module does a best effort guess based on
+              the filesystem and kernel version to determine if
+              "fallocate" can be used to create a swap file at the
+              specified path. "dd" is used if it determines that it
+              cannot. You can explicitly choose the command with this
+              option. Feel free to report any issues with the module
+              automatically choosing or not choosing fallocate'
             - 'fallocate is faster but "Preallocated files created by
               fallocate(1) may be interpreted as files with holes too
-              depending of the filesystem." which would cause swapon
+              depending of the filesystem." which can cause swapon
               to fail. man swapon'
-            - 'If you choose either "dd" or "fallocate" when creating
-              a swap file on btrfs you will also need to have the "chattr"
-              utility installed on the target system.'
+            - When creating a swap file on btrfs you will also need to
+              have the "chattr" utility installed on the target system.'
         required: false
         type: str
         choices: [ dd, fallocate ]
@@ -129,15 +131,17 @@ priority:
     sample: -1
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text import formatters, converters
-from ansible.module_utils.compat.version import LooseVersion
 import os
 import tempfile
 import errno
 import signal
 import sys
 import platform
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.text import formatters, converters
+from ansible.module_utils.compat.version import LooseVersion
+from ansible_collections.basicbind.swap_file.plugins.module_utils._misc import get_path_filesystem
 
 class SwapFile():
 
@@ -174,7 +178,7 @@ class SwapFile():
         create_args_dict = args_dict['dd']
  
         #["ext4", "xfs", "btrfs"]
-        fs = self.get_path_filesystem(self._path)
+        fs = get_path_filesystem(self._path)
         nocow = False
         kernel_loose_version = LooseVersion(platform.release())
 
@@ -183,14 +187,18 @@ class SwapFile():
                 nocow = True
                 create_args_dict = args_dict['fallocate']
             else:
-                err = 'Kernel version >= 5 needed to support swap files'
+                err = 'Kernel version >= 5 needed for swap file support'
                 err += ' on btrfs'
                 raise RuntimeError(err)
         elif fs == 'xfs':
             if kernel_loose_version >= LooseVersion('4.18'):
                 create_args_dict = args_dict['fallocate']
         elif fs == 'ext4':
-            if kernel_loose_version >= LooseVersion('4.18'):
+            # There should be support for using fallocated swap files on
+            # ext4 on earlier kernel versions, but some versions around 5.7
+            # to 5.8 appear to have a bug. For now we'll default to only
+            # using fallocate when the kernel version is above 5.11
+            if kernel_loose_version >= LooseVersion('5.11'):
                 create_args_dict = args_dict['fallocate']
 
         if create_cmd is not None:
@@ -213,7 +221,9 @@ class SwapFile():
             # using the btrfs command. If there is not enough
             # capacity for the file, btrfs will exit cleanly but
             # create a 0 byte file. We test the size here to ensure
-            # it was properly created
+            # it was properly created.
+            # We're no longer using the btrfs command but I see no
+            # reason to remove this test 
             if os.path.getsize(self._path) == formatters.human_to_bytes('%sM' % size_in_mib):
                 return
             else:
@@ -223,28 +233,6 @@ class SwapFile():
         else:
             raise RuntimeError(err)
 
-
-    def get_path_filesystem(self, path):
-        """Returns the type of filesystem the given path resides on"""
-        # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
-        # Copyright (c), Toshio Kuratomi <tkuratomi@ansible.com> 2016
-        # Copyright (c), D.T <https://github.com/basicbind> 2023 
-        # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
-        # Modified from the AnsibleModule.is_special_selinux_path method
-        try:
-            f = open('/proc/mounts', 'r')
-            mount_data = f.readlines()
-            f.close()
-        except Exception:
-            return None
-
-        path_mount_point = self._module.find_mount_point(path)
-
-        for line in mount_data:
-            (device, mount_point, fstype, options, rest) = line.split(' ', 4)
-            if converters.to_bytes(path_mount_point) == converters.to_bytes(mount_point):
-                return fstype
-        
 
     def get_status(self, opt):
         """Returns the current status of the on disk swap file"""
@@ -353,12 +341,12 @@ class SwapFile():
     def set_perms(self):
         changed = False
         file_args = {
-                'path': self._path,
-                'owner': 'root',
-                'group': 'root',
-                'secontext': [None, None, 'swapfile_t'],
-                'mode': '0600',
-                'attributes': None
+            'path': self._path,
+            'owner': 'root',
+            'group': 'root',
+            'secontext': [None, None, 'swapfile_t'],
+            'mode': '0600',
+            'attributes': None
         }
         changed |= self._module.set_fs_attributes_if_different(file_args, changed)
 
@@ -593,9 +581,12 @@ class SwapFileModule():
 
             self._changed = True
 
-        self._changed |= self._swap_file.mkswap()
-        self._changed |= self._swap_file.set_perms()
-        self._changed |= self._swap_file.swap_on(priority=self._desired_priority)
+        try:
+            self._changed |= self._swap_file.mkswap()
+            self._changed |= self._swap_file.set_perms()
+            self._changed |= self._swap_file.swap_on(priority=self._desired_priority)
+        except Exception as e:
+            self._fail(converters.to_text(e))
 
 
     def run(self):

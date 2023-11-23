@@ -5,12 +5,27 @@ galaxy_info:
   license: 'GPL-3.0-only'
   min_ansible_version: 2.9
   platforms:
+    - name: EL
+      versions:
+        - 8
+        - 9
     - name: Fedora
       versions:
-        - 38
         - 37
+        - 38
+    - name: Debian
+      version:
+        - 12
+    - name: Ubuntu
+      versions:
+        - 22
+        - 23
+
   galaxy_tags:
     - btrfs
+    - rhel
     - fedora
+    - debian
+    - ubuntu
     - swap
     - swapfile

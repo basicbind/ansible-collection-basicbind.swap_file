@@ -1,15 +1,4 @@
 ---
-- name: Install required packages block
-  vars:
-    distro_name: '{{ ansible_facts["distribution"] | lower }}'
-    distro_version: '{{ ansible_facts["distribution_major_version"] }}'
-  block:
-    - name: Install required packages
-      ansible.builtin.package:
-        name: '{{ __swap_file_packages_dict[distro_name][distro_version] }}'
-        state: 'present'
-      when: '__swap_file_packages_dict[distro_name][distro_version] is defined'
-
 - name: 'Create and activate swap file'
   basicbind.swap_file.swap_file:
     path: '{{ swap_file_path }}'
