@@ -541,7 +541,7 @@ class SwapFileModule():
         if not os.path.isdir(dir_path):
             self._fail('Directory "%s" does not exist' % dir_path)
 
-        # If the swap file doesn't exist  or the size isn't correct
+        # If the swap file doesn't exist or the size isn't correct
         # we create it
         if ((not self._swap_file.get_status('exists'))
                 or not self._swap_file.get_status('size') == self._desired_size_in_bytes):
