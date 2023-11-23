@@ -43,3 +43,14 @@ releases:
       bugfixes:
         - 'swap_file - Ensure temp files are removed if the module
                        is killed/interrupted'
+  2.0.0:
+    release_date: '2023-11-23'
+    changes:
+      release_summary: 'swap file module uses "fallocate" if it determines that it can'
+      major_changes:
+        - 'swap_file module - Now uses fallocate automatically by using
+          the filesystem type the swap file is to be put on, and the
+          kernel version to make a determination'
+        - 'swap_file module - No longer uses the btrfs command to
+          create swap files on btrfs filesystems. "fallocate" is now
+          used by default.

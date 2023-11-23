@@ -15,6 +15,7 @@ galaxy_info:
         - 38
     - name: Debian
       version:
+        - 11
         - 12
     - name: Ubuntu
       versions:

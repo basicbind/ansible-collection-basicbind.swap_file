@@ -1,6 +1,6 @@
-```yaml
 # Copyright: (c) 2023, D.T <https://github.com/basicbind>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+```yaml
 DOCUMENTATION:
     module: swap_file
     short_description: Creates a swap file
@@ -49,17 +49,19 @@ DOCUMENTATION:
             default: present
         create_cmd:
             description:
-                - 'By default the module uses dd to create the swap file on
-                  all filesystems except btrfs, where it uses the btrfs
-                  command. You can override this behavior by choosing the
-                  command with this option.'
+                - 'By default the module does a best effort guess based on
+                  the filesystem and kernel version to determine if
+                  "fallocate" can be used to create a swap file at the
+                  specified path. "dd" is used if it determines that it
+                  cannot. You can explicitly choose the command with this
+                  option. Feel free to report any issues with the module
+                  automatically choosing or not choosing fallocate'
                 - 'fallocate is faster but "Preallocated files created by
                   fallocate(1) may be interpreted as files with holes too
-                  depending of the filesystem." which would cause swapon
+                  depending of the filesystem." which can cause swapon
                   to fail. man swapon'
-                - 'If you choose either "dd" or "fallocate" when creating
-                  a swap file on btrfs you will also need to have the "chattr"
-                  utility installed on the target system.'
+                - When creating a swap file on btrfs you will also need to
+                  have the "chattr" utility installed on the target system.'
             required: false
             type: str
             choices: [ dd, fallocate ]

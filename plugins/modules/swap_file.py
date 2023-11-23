@@ -586,7 +586,7 @@ class SwapFileModule():
             self._changed |= self._swap_file.set_perms()
             self._changed |= self._swap_file.swap_on(priority=self._desired_priority)
         except Exception as e:
-            self._fail(converters.to_text(e))
+            self._fail('Unable to modify swap file %s' % converters.to_text(e))
 
 
     def run(self):
