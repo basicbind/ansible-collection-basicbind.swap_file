@@ -53,4 +53,12 @@ releases:
           kernel version to make a determination'
         - 'swap_file module - No longer uses the btrfs command to
           create swap files on btrfs filesystems. "fallocate" is now
-          used by default.
+          used by default.'
+  2.0.1:
+    release_date: '2023-11-24'
+    changes:
+      release_summary: 'Bug fix to stop failure if kernel version cannot be determined'
+      bugfixes:
+        - 'swap_file module - Fixed bug where module would fail if
+          kernel version could not be determined'
+
