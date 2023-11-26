@@ -66,6 +66,6 @@ releases:
     changes:
       release_summary: 'Ensure btrfs subvolumes not mounted independently are correctly identified'
       bugfixes:
-        - 'swap_file module - Fixed bug where btrfs subvolumes which
+        - 'swap_file module - Fixed regression where btrfs subvolumes which
           were not mounted independently were not being correctly
           identified.'
