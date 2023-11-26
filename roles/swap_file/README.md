@@ -27,8 +27,6 @@ swap_file_size: '1G'
 swap_file_priority: -1 
 
 # Choose between using "fallocate" and "dd" to create the swap file.
-# When creating a swap file on btrfs you will also need to
-# have the "chattr" utility installed on the target system.
 swap_file_create_cmd: '{{ omit }}'
 ```
 

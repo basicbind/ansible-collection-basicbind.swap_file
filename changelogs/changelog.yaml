@@ -61,4 +61,11 @@ releases:
       bugfixes:
         - 'swap_file module - Fixed bug where module would fail if
           kernel version could not be determined'
-
+  2.0.2:
+    release_date: '2023-11-25'
+    changes:
+      release_summary: 'Ensure btrfs subvolumes not mounted independently are correctly identified'
+      bugfixes:
+        - 'swap_file module - Fixed bug where btrfs subvolumes which
+          were not mounted independently were not being correctly
+          identified.'
