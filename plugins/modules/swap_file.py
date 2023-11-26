@@ -213,13 +213,13 @@ class SwapFile():
             create_args_dict = args_dict[create_cmd]
         
         if nocow:
-            chattr_bin = self._module.get_bin_path('chattr')
+            chattr_bin = self._module.get_bin_path('chattr', required=True)
             chattr_args = [chattr_bin, '+C', self._path]
             rc, out, err = self._module.run_command(chattr_args)
             if rc != 0:
                 raise RuntimeError('Unable to set No_COW attribute on swap file')
 
-        args = [ self._module.get_bin_path(create_args_dict['cmd']) ]
+        args = [ self._module.get_bin_path(create_args_dict['cmd'], required=True) ]
         args += create_args_dict['opts']
 
         rc, out, err = self._module.run_command(args)
@@ -269,7 +269,7 @@ class SwapFile():
 
             # Determine if swap area is on file
             elif opt == 'is_formatted':
-                blkid_bin = self._module.get_bin_path('blkid')
+                blkid_bin = self._module.get_bin_path('blkid', required=True)
                 blkid_args = [
                     blkid_bin,
                     '-s',
@@ -287,7 +287,7 @@ class SwapFile():
 
             # Determine if swap file is activated or its current priority
             elif opt == 'is_on' or opt == 'priority':
-                swapon_bin = self._module.get_bin_path('swapon')
+                swapon_bin = self._module.get_bin_path('swapon', required=True)
                 swapon_args = [
                     swapon_bin,
                     '--show=NAME,PRIO',
@@ -380,7 +380,7 @@ class SwapFile():
             if is_on:
                 self.swap_off()
 
-            swapon_bin = self._module.get_bin_path('swapon')
+            swapon_bin = self._module.get_bin_path('swapon', required=True)
             swapon_args = [swapon_bin, '-p', str(requested_priority), self._path]
 
             if self._module.check_mode:
@@ -396,7 +396,7 @@ class SwapFile():
 
     def swap_off(self):
         changed = False
-        swapoff_bin = self._module.get_bin_path('swapoff')
+        swapoff_bin = self._module.get_bin_path('swapoff', required=True)
         swapoff_args = [swapoff_bin, self._path]
 
         if self.get_status('is_on'):
