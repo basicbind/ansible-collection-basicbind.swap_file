@@ -176,7 +176,7 @@ class SwapFile():
         }
 
         create_args_dict = args_dict['dd']
- 
+
         kernel_version = platform.release()
         if kernel_version != '':
             kernel_loose_version = LooseVersion(kernel_version)
@@ -211,7 +211,7 @@ class SwapFile():
 
         if create_cmd is not None:
             create_args_dict = args_dict[create_cmd]
-        
+
         if nocow:
             chattr_bin = self._module.get_bin_path('chattr', required=True)
             chattr_args = [chattr_bin, '+C', self._path]
@@ -231,7 +231,7 @@ class SwapFile():
             # create a 0 byte file. We test the size here to ensure
             # it was properly created.
             # We're no longer using the btrfs command but I see no
-            # reason to remove this test 
+            # reason to remove this test
             if os.path.getsize(self._path) == formatters.human_to_bytes('%sM' % size_in_mib):
                 return
             else:
@@ -339,8 +339,8 @@ class SwapFile():
                     # the file to exist in the first place. The file
                     # would of course have had to be removed between
                     # the time we checked if it exists and us trying to
-                    # remove it. 
-                    if not e.errno == errno.ENOENT:
+                    # remove it.
+                    if e.errno != errno.ENOENT:
                         raise
             changed = True
         return changed
