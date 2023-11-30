@@ -16,38 +16,38 @@ description:
 options:
     path:
         description:
-            - The absolute path of the swap file
-            - Intermediate directories will not be created if they do
+            - The absolute path of the swap file.
+            - Intermediate directories will not be created if they do.
               not exist
         required: true
         type: str
     priority:
         description:
             - Sets the swap priority of the swap file.
-            - Must be between -1 and 32767
+            - Must be between -1 and 32767.
             - -1 indicates that the system is responsible for setting the
               priority. Therefore the resulting priority could be any
-              number < 0
+              number < 0.
         required: false
         type: int
         default: -1
     size:
         description:
-            - required if state == present
-            - Sets the size of the swap file in human readable form
-            - Valid size suffixes = Y, Z, E, P, T, G, M, K, B
-            - 1M/1MB = 1 Mebibyte. 1G/1GB = 1 Gibibyte
+            - Required if state == present.
+            - Sets the size of the swap file in human readable form.
+            - Valid size suffixes = Y, Z, E, P, T, G, M, K, B.
+            - 1M/1MB = 1 Mebibyte. 1G/1GB = 1 Gibibyte.
             - Must not use lower case "b" in the suffix unless "b" is
               the only suffix. In which case the size is interpreted
-              as bytes
-            - If suffix is missing. size is assumed to be in Gibibytes
-            - Given size is rounded to the nearest MiB
+              as bytes.
+            - If suffix is missing. size is assumed to be in Gibibytes.
+            - Given size is rounded to the nearest MiB.
         required: false
         type: str
         default: null
     state:
         description:
-            - Controls whether to create or remove the swap file
+            - Controls whether to create or remove the swap file.
         required: false
         type: str
         choices: [ absent, present ]
@@ -60,12 +60,12 @@ options:
               specified path. "dd" is used if it determines that it
               cannot. You can explicitly choose the command with this
               option. Feel free to report any issues with the module
-              automatically choosing or not choosing fallocate'
+              automatically choosing or not choosing fallocate.'
             - 'fallocate is faster but "Preallocated files created by
               fallocate(1) may be interpreted as files with holes too
               depending of the filesystem." which can cause swapon
-              to fail. man swapon'
-            - When creating a swap file on btrfs you will also need to
+              to fail. man swapon.'
+            - 'When creating a swap file on btrfs you will also need to
               have the "chattr" utility installed on the target system.'
         required: false
         type: str
@@ -75,15 +75,15 @@ attributes:
     check_mode:
         description:
             - Can run in check_mode and return changed status
-              prediction without modifying target
+              prediction without modifying target.
         support: full
 notes:
     - The swap file is first created temporarily in the same directory
       it will live, with the name prefix ".ansible_swap_file". This
       file will be removed if a failure/interruption occurs or when it
-      is moved into place
+      is moved into place.
 author:
-    - D.T (https://github.com/basicbind)
+    - D.T (@basicbind)
 '''
 
 EXAMPLES = r'''
@@ -143,6 +143,7 @@ from ansible.module_utils.common.text import formatters, converters
 from ansible.module_utils.compat.version import LooseVersion
 from ansible_collections.basicbind.swap_file.plugins.module_utils._misc import get_path_filesystem
 
+
 class SwapFile():
 
     def __init__(self, module, path):
@@ -183,7 +184,7 @@ class SwapFile():
         else:
             kernel_loose_version = LooseVersion('0')
 
-        #["ext4", "xfs", "btrfs"]
+        # ["ext4", "xfs", "btrfs"]
         fs = get_path_filesystem(self._path)
         nocow = False
 
@@ -219,7 +220,7 @@ class SwapFile():
             if rc != 0:
                 raise RuntimeError('Unable to set No_COW attribute on swap file')
 
-        args = [ self._module.get_bin_path(create_args_dict['cmd'], required=True) ]
+        args = [self._module.get_bin_path(create_args_dict['cmd'], required=True)]
         args += create_args_dict['opts']
 
         rc, out, err = self._module.run_command(args)
@@ -240,7 +241,6 @@ class SwapFile():
                 raise RuntimeError(msg)
         else:
             raise RuntimeError(err)
-
 
     def get_status(self, opt):
         """Returns the current status of the on disk swap file"""
@@ -306,7 +306,6 @@ class SwapFile():
 
         return status
 
-
     def mkswap(self):
         """Creates a swap area on swap file"""
         changed = False
@@ -324,7 +323,6 @@ class SwapFile():
                 raise RuntimeError(err)
 
         return changed
-
 
     def remove(self):
         """Removes the swap file"""
@@ -345,7 +343,6 @@ class SwapFile():
             changed = True
         return changed
 
-
     def set_perms(self):
         changed = False
         file_args = {
@@ -360,7 +357,6 @@ class SwapFile():
 
         return changed
 
-
     def swap_on(self, priority):
         """Enables swapping on swap file and ensures priority is set correctly"""
         changed = False
@@ -374,7 +370,7 @@ class SwapFile():
         # differs and either one is >= 0
         if ((not is_on) or (current_priority is None)
                 or ((int(requested_priority) != int(current_priority))
-                    and (int (requested_priority) >= 0 or int(current_priority) >= 0))):
+                    and (int(requested_priority) >= 0 or int(current_priority) >= 0))):
             # We could be running swapon to change the priority on a currently
             # enabled swap. If this is the case we want to swapoff first
             if is_on:
@@ -432,12 +428,10 @@ class SwapFileModule():
         self._desired_create_cmd = module.params['create_cmd']
         self._swap_file = SwapFile(module=self._module, path=self._desired_path)
 
-
     @property
     def _desired_path(self):
         """Returns the _path attribute"""
         return self.__desired_path
-
 
     @_desired_path.setter
     def _desired_path(self, path):
@@ -453,12 +447,10 @@ class SwapFileModule():
         else:
             self._fail('Path must be an absolute path')
 
-
     @property
     def _desired_priority(self):
         """Returns the __priority attribute"""
         return self.__desired_priority
-
 
     @_desired_priority.setter
     def _desired_priority(self, priority):
@@ -467,25 +459,20 @@ class SwapFileModule():
         if (priority >= self._PRIORITY_MIN and priority <= self._PRIORITY_MAX):
             self.__desired_priority = priority
         else:
-            self._fail('priority is not between %s and %s'
-                        % (self._PRIORITY_MIN, self._PRIORITY_MAX))
-
+            self._fail('priority is not between %s and %s' % (self._PRIORITY_MIN, self._PRIORITY_MAX))
 
     @property
     def _desired_size_in_mib(self):
         return self.__desired_size_in_mib
 
-
     @property
     def _desired_size_in_bytes(self):
         return self.__desired_size_in_bytes
-
 
     @property
     def _desired_size(self):
         """Returns the _size attribute"""
         return self.__desired_size
-
 
     @_desired_size.setter
     def _desired_size(self, size):
@@ -504,19 +491,17 @@ class SwapFileModule():
                 self._fail(converters.to_text(e))
             else:
                 # We ensure the size is a multiple of 1Mebibyte
-                MB = 1024*1024
-                size_in_mib = int(round(size_in_bytes/MB))
+                MB = 1024 * 1024
+                size_in_mib = int(round(size_in_bytes / MB))
                 size_in_bytes = int(size_in_mib * MB)
 
         self.__desired_size = size
         self.__desired_size_in_mib = size_in_mib
         self.__desired_size_in_bytes = size_in_bytes
 
-
     @property
     def _desired_create_cmd(self):
         return self.__desired_create_cmd
-
 
     @_desired_create_cmd.setter
     def _desired_create_cmd(self, create_cmd):
@@ -527,7 +512,6 @@ class SwapFileModule():
         else:
             self._fail('create_cmd must be one of [%s]' % ','.join(create_cmd_opts))
 
-
     def _absent(self):
         """Deactivates and removes swap file"""
         try:
@@ -536,15 +520,13 @@ class SwapFileModule():
         except Exception as e:
             self._fail(converters.to_text(e))
 
-
     def _fail(self, msg):
         """Responsible for handling module failures"""
         fail_result = {'msg': msg}
         self._module.fail_json(**fail_result)
 
-
     def _present(self):
-        """Ensures swap file is created and activated""" 
+        """Ensures swap file is created and activated"""
         dir_path = os.path.dirname(self._desired_path)
         if not os.path.isdir(dir_path):
             self._fail('Directory "%s" does not exist' % dir_path)
@@ -568,7 +550,7 @@ class SwapFileModule():
                 except Exception:
                     pass
 
-                self._module.add_cleanup_file( tmp_swap_file_path)
+                self._module.add_cleanup_file(tmp_swap_file_path)
                 try:
                     tmp_swap_file = SwapFile(self._module, path=tmp_swap_file_path)
                     tmp_swap_file.allocate(
@@ -596,7 +578,6 @@ class SwapFileModule():
         except Exception as e:
             self._fail('Unable to modify swap file %s' % converters.to_text(e))
 
-
     def run(self):
         """Responsible for running the function responsible for each state"""
         def _sig_handler(signum, frame):
@@ -606,14 +587,13 @@ class SwapFileModule():
             if signum == signal.SIGINT:
                 os.kill(os.getpid(), signal.SIGINT)
             else:
-                sys.exit(1)
-
+                self._fail("Killed/Interrupted")
 
         # Ensure we cleanup if killed/interrupted
         cleanup_sigs = [
-                signal.SIGTERM,
-                signal.SIGHUP,
-                signal.SIGINT
+            signal.SIGTERM,
+            signal.SIGHUP,
+            signal.SIGINT
         ]
         original_sig_handlers = {}
         for signum in cleanup_sigs:
@@ -654,6 +634,7 @@ def main():
 
     swap_file = SwapFileModule(module=module)
     swap_file.run()
+
 
 if __name__ == '__main__':
     main()
