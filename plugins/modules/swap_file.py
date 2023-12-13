@@ -140,7 +140,7 @@ import platform
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text import formatters, converters
-from ansible.module_utils.compat.version import LooseVersion
+from ansible_collections.basicbind.swap_file.plugins.module_utils._version import LooseVersion
 from ansible_collections.basicbind.swap_file.plugins.module_utils._misc import get_path_filesystem
 
 
