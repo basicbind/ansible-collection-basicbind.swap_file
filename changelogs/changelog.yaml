@@ -69,3 +69,9 @@ releases:
         - 'swap_file module - Fixed regression where btrfs subvolumes which
           were not mounted independently were not being correctly
           identified.'
+  2.0.3:
+    release_date: '2023-12-13'
+    changes:
+      release_summary: 'Ensure support for older ansible releases'
+      bugfixes:
+        - 'swap_file module - Added _version.py module_utils to ensure module does not fail on older ansible releases which do not have ansible.module_utils.compat.version.LooseVersion'
